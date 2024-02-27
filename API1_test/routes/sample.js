@@ -42,18 +42,32 @@
  *               respuestaBebida: "Beverage Response"
  */
 
+
 const express = require('express');
 const router = express.Router();
+const {OpenAI}=require("openai");
+const openai = new OpenAI({apiKey : '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'});
+
+async function main() {
+  const completion =  openai.chat.completions.create({
+    messages: [{ role: "system", content: "You are a helpful assistant." }],
+    model: "gpt-3.5-turbo",
+  });
+  return "completion.choices[0]"
+  console.log(completion.choices[0]);
+}
+
 
 const interfaceController = {
     
-    pickAPI: function(mode, endpoint) {
+    pickAPI:  function(mode, endpoint) {
         if(mode=="1"){
-            return {
+            const ai_response=main();
+          return {
                 respuestaPrincipal:"pollo1",
                 respuestaPostre: "postre1",
                 respuestaBebida: "bebida1",
-                endpointo:endpoint
+                endpointo:ai_response
               } //openai
         }
         else if(mode =="2"){
