@@ -48,26 +48,25 @@ const router = express.Router();
 const {OpenAI}=require("openai");
 const openai = new OpenAI({apiKey : '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'});
 
-async function main() {
-  const completion =  openai.chat.completions.create({
-    messages: [{ role: "system", content: "You are a helpful assistant." }],
+async function API_OpenAi() {
+  const completion = await openai.chat.completions.create({
+    messages: [{ role: "system", content: "I want a recommendation for an accompaniment to tea" }],
     model: "gpt-3.5-turbo",
   });
-  return "completion.choices[0]"
-  console.log(completion.choices[0]);
+  return completion.choices[0];
 }
 
 
 const interfaceController = {
     
-    pickAPI:  function(mode, endpoint) {
+    pickAPI: async function(mode, endpoint) {
         if(mode=="1"){
-            const ai_response=main();
-          return {
+            const resp = await API_OpenAi();
+            return {
                 respuestaPrincipal:"pollo1",
                 respuestaPostre: "postre1",
                 respuestaBebida: "bebida1",
-                endpointo:ai_response
+                endpointo: resp
               } //openai
         }
         else if(mode =="2"){
@@ -93,20 +92,16 @@ const recomendationController = {
               } //base local
         }
         else{
-            return interfaceController.pickAPI(mode,endpoint) //controlador de apis
+            return  interfaceController.pickAPI(mode,endpoint) //controlador de apis
         }
         
     },
   };
 
-router.post('/sample', (req, res) => {
+router.post('/sample', async (req, res) => {
   const { platilloPrincipal,bebida, postre, modo, endpoint } = req.body;
 
-  const respuesta = recomendationController.pickMode(modo,endpoint);
-  // Example logic to generate responses based on request
-  //const respuestaPrincipal = `Response for Main Dish: ${platilloPrincipal}`;
-  //const respuestaPostre = `Response for Dessert: ${postre}`;
-  //const respuestaBebida = `Response for Beverage Mode ${modo}: ${endpoint} ${bebida}`;
+  const respuesta = await recomendationController.pickMode(modo,endpoint);
 
   res.json(respuesta);
 });
