@@ -47,29 +47,43 @@ const express = require('express');
 const router = express.Router();
 const {OpenAI}=require("openai");
 const openai = new OpenAI({apiKey : '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'});
-
-async function API_OpenAi() {
+/**
+ * This function ask to openAI what is a good dish side for an especific dish
+ * @param {*} platilloPrincipal string with the name of the dish, it could be a undefine 
+ * @param {*} bebida string with the name of the dish, it could be a undefine 
+ * @param {*} postre string with the name of the dish, it could be a undefine 
+ * @returns a json with openAI answer 
+ */
+async function API_OpenAi(platilloPrincipal, bebida, postre) { //IMPORTANTE se debe agregar el prompt para devolver la info en el formato deseado
   const completion = await openai.chat.completions.create({
-    messages: [{ role: "system", content: "I want a recommendation for an accompaniment to tea" }],
+    messages: [{ role: "system", content: "I want a recommendation for an accompaniment to "+platilloPrincipal}],
     model: "gpt-3.5-turbo",
   });
-  return completion.choices[0];
+  return completion.choices[0]["message"]["content"];
 }
 
 
 const interfaceController = {
-    
-    pickAPI: async function(mode, endpoint) {
+    /**
+     * This function is an interface for the externals API
+     * @param {*} platilloPrincipal 
+     * @param {*} bebida 
+     * @param {*} postre 
+     * @param {*} mode this string could be 1 or 2, 1 for an openAI request, 2 for an external API request
+     * @param {*} endpoint this param could be a undefine, but the function is to especify a endpoint for an external API
+     * @returns a json with the especific request
+     */
+    pickAPI: async function(platilloPrincipal, bebida, postre,mode, endpoint) {
         if(mode=="1"){
-            const resp = await API_OpenAi();
+            const resp = await API_OpenAi(platilloPrincipal,bebida,postre);
             return {
                 respuestaPrincipal:"pollo1",
                 respuestaPostre: "postre1",
                 respuestaBebida: "bebida1",
-                endpointo: resp
+                recomendacion: resp
               } //openai
         }
-        else if(mode =="2"){
+        else if(mode =="2"){ //IMPORTANTE se debe realizar la conexión con API externo 
             return {
                 respuestaPrincipal:"pollo2",
                 respuestaPostre: "postre2",
@@ -82,17 +96,25 @@ const interfaceController = {
   };
 
 const recomendationController = {
-    
-    pickMode: function(mode, endpoint) {
+    /**
+     * This interface controls if the request is in the local data base or with an external API
+     * @param {*} platilloPrincipal 
+     * @param {*} bebida 
+     * @param {*} postre 
+     * @param {*} mode 
+     * @param {*} endpoint 
+     * @returns a json with the response
+     */
+    pickMode: function(platilloPrincipal, bebida, postre,mode, endpoint) {
         if(mode=="0"){
             return {
-                respuestaPrincipal:"pollo0",
-                respuestaPostre: "postre0",
-                respuestaBebida: "bebida0",
-              } //base local
+                respuestaPrincipal:platilloPrincipal,
+                respuestaPostre: postre,
+                respuestaBebida: bebida,
+              } //IMPORTANTE se debe agregar la base local o el diccionario 
         }
         else{
-            return  interfaceController.pickAPI(mode,endpoint) //controlador de apis
+            return  interfaceController.pickAPI(platilloPrincipal, bebida, postre,mode,endpoint) //controlador de apis
         }
         
     },
@@ -100,8 +122,8 @@ const recomendationController = {
 
 router.post('/sample', async (req, res) => {
   const { platilloPrincipal,bebida, postre, modo, endpoint } = req.body;
-
-  const respuesta = await recomendationController.pickMode(modo,endpoint);
+  //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
+  const respuesta = await recomendationController.pickMode(platilloPrincipal, bebida, postre,modo,endpoint);
 
   res.json(respuesta);
 });
