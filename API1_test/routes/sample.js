@@ -82,6 +82,7 @@ const responseController = {
    * @returns a json with the especific request
    */
 
+  // Obtains responses from the mock db
   getPredefinedResponse: function (category) {
     // Obtener una respuesta predeterminada según la categoría (postre, plato principal, bebida)
     const responses = defaultResponses[category] || [];
@@ -91,11 +92,22 @@ const responseController = {
   },
 
   requestDefaultResponses: function (platilloPrincipal, bebida, postre) {
+    respuestaPrincipal = platilloPrincipal
+      ? platilloPrincipal
+      : responseController.getPredefinedResponse("platilloPrincipal");
+
+    respuestaBebida = bebida
+      ? bebida
+      : responseController.getPredefinedResponse("bebida");
+
+    respuestaPostre = postre
+      ? postre
+      : responseController.getPredefinedResponse("postre");
+
     return {
-      respuestaPrincipal:
-        responseController.getPredefinedResponse("platilloPrincipal"),
-      respuestaPostre: responseController.getPredefinedResponse("postre"),
-      respuestaBebida: responseController.getPredefinedResponse("bebida"),
+      respuestaPrincipal,
+      respuestaPostre,
+      respuestaBebida,
     };
   },
 
