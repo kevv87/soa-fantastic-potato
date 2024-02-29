@@ -118,10 +118,14 @@ const responseController = {
   },
 };
 
-router.post("/sample", async (req, res) => {
-  const { platilloPrincipal, bebida, postre } = req.body;
-  //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
+router.get("/sample/OpenAPI", async (req, res) => {
+  const { platilloPrincipal, bebida, postre } = req.query;
 
+  console.log("Platillo Principal", platilloPrincipal);
+  console.log("Bebida", bebida);
+  console.log("Postre", postre);
+
+  //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
   const respuesta = await responseController.requestOpenAPI(
     platilloPrincipal,
     bebida,
@@ -130,17 +134,36 @@ router.post("/sample", async (req, res) => {
   res.json(respuesta);
 });
 
-router.get("/sample", async (req, res) => {
+router.get("/sample/DefaultResponses", async (req, res) => {
   const { platilloPrincipal, bebida, postre } = req.query;
+
   console.log("Platillo Principal", platilloPrincipal);
   console.log("Bebida", bebida);
   console.log("Postre", postre);
+
   //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
   const respuesta = await responseController.requestDefaultResponses(
     platilloPrincipal,
     bebida,
     postre
   );
+  res.json(respuesta);
+});
+
+router.get("/sample/Endpoint", async (req, res) => {
+  const { platilloPrincipal, bebida, postre } = req.query;
+
+  console.log("Platillo Principal", platilloPrincipal);
+  console.log("Bebida", bebida);
+  console.log("Postre", postre);
+
+  //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
+  const respuesta = await responseController.requestEndpoint(
+    platilloPrincipal,
+    bebida,
+    postre
+  );
+
   res.json(respuesta);
 });
 
