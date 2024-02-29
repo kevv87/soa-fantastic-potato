@@ -47,6 +47,7 @@ const { OpenAI } = require("openai");
 const openai = new OpenAI({
   apiKey: "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",
 });
+
 /**
  * This function ask to openAI what is a good dish side for an especific dish
  * @param {*} platilloPrincipal string with the name of the dish, it could be a undefine
@@ -130,7 +131,10 @@ router.post("/sample", async (req, res) => {
 });
 
 router.get("/sample", async (req, res) => {
-  const { platilloPrincipal, bebida, postre } = req.body;
+  const { platilloPrincipal, bebida, postre } = req.query;
+  console.log("Platillo Principal", platilloPrincipal);
+  console.log("Bebida", bebida);
+  console.log("Postre", postre);
   //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
   const respuesta = await responseController.requestDefaultResponses(
     platilloPrincipal,
