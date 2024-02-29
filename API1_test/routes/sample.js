@@ -43,6 +43,8 @@
  */
 
 
+const defaultResponses = require('./defaultResponses');
+
 const express = require('express');
 const router = express.Router();
 const {OpenAI}=require("openai");
@@ -73,7 +75,27 @@ const interfaceController = {
      * @param {*} endpoint this param could be a undefine, but the function is to especify a endpoint for an external API
      * @returns a json with the especific request
      */
-    pickAPI: async function(platilloPrincipal, bebida, postre,mode, endpoint) {
+
+
+
+
+    getPredefinedResponse: function(category) {
+      // Obtener una respuesta predeterminada según la categoría (postre, plato principal, bebida)
+      const responses = defaultResponses[category] || [];
+
+      // Elegir una respuesta aleatoria
+      const randomIndex = Math.floor(Math.random() * responses.length);
+
+      return responses[randomIndex];
+  },
+
+
+
+
+
+    pickAPI: async function(platilloPrincipal, bebida, postre, mode, endpoint) {
+
+
         if(mode=="1"){
             const resp = await API_OpenAi(platilloPrincipal,bebida,postre);
             return {
@@ -105,16 +127,16 @@ const recomendationController = {
      * @param {*} endpoint 
      * @returns a json with the response
      */
-    pickMode: function(platilloPrincipal, bebida, postre,mode, endpoint) {
+    pickMode: function(platilloPrincipal, bebida, postre, mode, endpoint) {
         if(mode=="0"){
-            return {
-                respuestaPrincipal:platilloPrincipal,
-                respuestaPostre: postre,
-                respuestaBebida: bebida,
-              } //IMPORTANTE se debe agregar la base local o el diccionario 
+          return {
+            respuestaPrincipal: interfaceController.getPredefinedResponse("platilloPrincipal"),
+            respuestaPostre: interfaceController.getPredefinedResponse("postre"),
+            respuestaBebida: interfaceController.getPredefinedResponse("bebida"),
+          };
         }
         else{
-            return  interfaceController.pickAPI(platilloPrincipal, bebida, postre,mode,endpoint) //controlador de apis
+            return  interfaceController.pickAPI(platilloPrincipal, bebida, postre, mode, endpoint) //controlador de apis
         }
         
     },
