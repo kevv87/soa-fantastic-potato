@@ -41,6 +41,7 @@
  */
 
 const defaultResponses = require("./defaultResponses");
+
 const express = require("express");
 const router = express.Router();
 const { OpenAI } = require("openai");
@@ -77,8 +78,6 @@ const responseController = {
    * @param {*} platilloPrincipal
    * @param {*} bebida
    * @param {*} postre
-   * @param {*} mode this string could be 1 or 2, 1 for an openAI request, 2 for an external API request
-   * @param {*} endpoint this param could be a undefine, but the function is to especify a endpoint for an external API
    * @returns a json with the especific request
    */
 
@@ -121,10 +120,8 @@ const responseController = {
 
   requestOpenAPI: async function (platilloPrincipal, bebida, postre) {
     const resp = await API_OpenAi(platilloPrincipal, bebida, postre);
+
     return {
-      respuestaPrincipal: "pollo1",
-      respuestaPostre: "postre1",
-      respuestaBebida: "bebida1",
       recomendacion: resp,
     }; //openai
   },
@@ -132,10 +129,6 @@ const responseController = {
 
 router.get("/sample/OpenAPI", async (req, res) => {
   const { platilloPrincipal, bebida, postre } = req.query;
-
-  console.log("Platillo Principal", platilloPrincipal);
-  console.log("Bebida", bebida);
-  console.log("Postre", postre);
 
   //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
   const respuesta = await responseController.requestOpenAPI(
@@ -149,10 +142,6 @@ router.get("/sample/OpenAPI", async (req, res) => {
 router.get("/sample/DefaultResponses", async (req, res) => {
   const { platilloPrincipal, bebida, postre } = req.query;
 
-  console.log("Platillo Principal", platilloPrincipal);
-  console.log("Bebida", bebida);
-  console.log("Postre", postre);
-
   //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
   const respuesta = await responseController.requestDefaultResponses(
     platilloPrincipal,
@@ -164,11 +153,6 @@ router.get("/sample/DefaultResponses", async (req, res) => {
 
 router.get("/sample/Endpoint", async (req, res) => {
   const { platilloPrincipal, bebida, postre } = req.query;
-
-  console.log("Platillo Principal", platilloPrincipal);
-  console.log("Bebida", bebida);
-  console.log("Postre", postre);
-
   //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
   const respuesta = await responseController.requestEndpoint(
     platilloPrincipal,
