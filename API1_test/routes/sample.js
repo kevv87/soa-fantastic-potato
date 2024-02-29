@@ -81,15 +81,16 @@ const responseController = {
    * @returns a json with the especific request
    */
 
-  // Obtains responses from the mock db
+  // Obtains responses from the defaultResponses file
   getPredefinedResponse: function (category) {
-    // Obtener una respuesta predeterminada según la categoría (postre, plato principal, bebida)
+    // Obtains a response depending on the category
     const responses = defaultResponses[category] || [];
-    // Elegir una respuesta aleatoria
+    // Random selection from the data
     const randomIndex = Math.floor(Math.random() * responses.length);
     return responses[randomIndex];
   },
 
+  // Handles the nullable values for default responses
   requestDefaultResponses: function (platilloPrincipal, bebida, postre) {
     respuestaPrincipal = platilloPrincipal
       ? platilloPrincipal
@@ -110,6 +111,7 @@ const responseController = {
     };
   },
 
+  // Handles the nullable values for classmate response
   requestEndpoint: function (platilloPrincipal, bebida, postre) {
     return {
       respuestaPrincipal: getPredefinedResponse("platilloPrincipal"),
@@ -118,6 +120,7 @@ const responseController = {
     };
   },
 
+  // Handles the nullable values for the OpenAPI response
   requestOpenAPI: async function (platilloPrincipal, bebida, postre) {
     const resp = await API_OpenAi(platilloPrincipal, bebida, postre);
 
@@ -127,6 +130,7 @@ const responseController = {
   },
 };
 
+// OpenAPI get
 router.get("/sample/OpenAPI", async (req, res) => {
   const { platilloPrincipal, bebida, postre } = req.query;
 
@@ -139,6 +143,7 @@ router.get("/sample/OpenAPI", async (req, res) => {
   res.json(respuesta);
 });
 
+// Default Responses get
 router.get("/sample/DefaultResponses", async (req, res) => {
   const { platilloPrincipal, bebida, postre } = req.query;
 
@@ -151,6 +156,7 @@ router.get("/sample/DefaultResponses", async (req, res) => {
   res.json(respuesta);
 });
 
+// Classmates Endpoint get
 router.get("/sample/Endpoint", async (req, res) => {
   const { platilloPrincipal, bebida, postre } = req.query;
   //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
