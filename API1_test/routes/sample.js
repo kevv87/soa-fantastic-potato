@@ -1,43 +1,67 @@
 // routes/sample.js
 /**
  * @swagger
- * tags:
- *   name: Sample
- *   description: Sample API
- */
-/**
- * @swagger
- * /api/sample:
- *   post:
- *     summary: Get responses based on request
- *     tags: [Sample]
- *     requestBody:
- *       description: Request body
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               platilloPrincipal:
- *                 type: string
- *               postre:
- *                 type: string
- *               bebida:
- *                 type: string
- *               modo:
- *                 type: integer
- *               endpoint:
- *                 type: string
+ * /api/OpenAPI:
+ *   get:
+ *     summary: Get recommendations using OpenAI
+ *     parameters:
+ *       - name: platilloPrincipal
+ *         in: query
+ *         description: Name of the main dish
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: bebida
+ *         in: query
+ *         description: Name of the beverage
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: postre
+ *         in: query
+ *         description: Name of the dessert
+ *         required: false
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Successful response
  *         content:
  *           application/json:
  *             example:
- *               respuestaPrincipal: "Main Dish Response"
- *               respuestaPostre: "Dessert Response"
- *               respuestaBebida: "Beverage Response"
+ *               recomendacion: "Your Default Responses recommendation"
+ *
+ *
+ * @swagger
+ * /api/DefaultResponses:
+ *   get:
+ *     summary: Get recommendations using OpenAI
+ *     parameters:
+ *       - name: platilloPrincipal
+ *         in: query
+ *         description: Name of the main dish
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: bebida
+ *         in: query
+ *         description: Name of the beverage
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: postre
+ *         in: query
+ *         description: Name of the dessert
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             example:
+ *               recomendacion: "Your Default Responses recommendation"
  */
 
 const defaultResponses = require("./defaultResponses");
@@ -50,25 +74,35 @@ const openai = new OpenAI({
 });
 
 /**
- * This function ask to openAI what is a good dish side for an especific dish
- * @param {*} platilloPrincipal string with the name of the dish, it could be a undefine
- * @param {*} bebida string with the name of the dish, it could be a undefine
- * @param {*} postre string with the name of the dish, it could be a undefine
+ * This function ask to openAI what is a good side dish for a especific dish
+ * @param {*} platilloPrincipal string with the name of the main dish, it could be undefined
+ * @param {*} bebida string with the name of the drink, it could be undefined
+ * @param {*} postre string with the name of the dessert, it could be undefined
  * @returns a json with openAI answer
  */
+
 async function API_OpenAi(platilloPrincipal, bebida, postre) {
-  //IMPORTANTE se debe agregar el prompt para devolver la info en el formato deseado
+  // IMPORTANTE: Agregar el prompt para devolver la información en el formato deseado
+  const prompt =
+    "I need a main dish, dessert, and beverage, and I already have" +
+    platilloPrincipal +
+    " " +
+    bebida +
+    " " +
+    postre +
+    " " +
+    "Provide recommendations for the ones I don't have.";
+
   const completion = await openai.chat.completions.create({
     messages: [
       {
-        role: "system",
-        content:
-          "I want a recommendation for an accompaniment to " +
-          platilloPrincipal,
+        role: "user",
+        content: prompt,
       },
     ],
     model: "gpt-3.5-turbo",
   });
+
   return completion.choices[0]["message"]["content"];
 }
 
@@ -131,10 +165,9 @@ const responseController = {
 };
 
 // OpenAPI get
-router.get("/sample/OpenAPI", async (req, res) => {
+router.get("/OpenAPI", async (req, res) => {
   const { platilloPrincipal, bebida, postre } = req.query;
 
-  //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
   const respuesta = await responseController.requestOpenAPI(
     platilloPrincipal,
     bebida,
@@ -144,22 +177,25 @@ router.get("/sample/OpenAPI", async (req, res) => {
 });
 
 // Default Responses get
-router.get("/sample/DefaultResponses", async (req, res) => {
-  const { platilloPrincipal, bebida, postre } = req.query;
+router.get("/DefaultResponses", async (req, res) => {
+  try {
+    const { platilloPrincipal, bebida, postre } = req.query;
 
-  //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
-  const respuesta = await responseController.requestDefaultResponses(
-    platilloPrincipal,
-    bebida,
-    postre
-  );
-  res.json(respuesta);
+    const respuesta = await responseController.requestDefaultResponses(
+      platilloPrincipal,
+      bebida,
+      postre
+    );
+    res.json(respuesta);
+  } catch (error) {
+    console.error("Error in /DefaultResponses:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 // Classmates Endpoint get
-router.get("/sample/Endpoint", async (req, res) => {
+router.get("/Endpoint", async (req, res) => {
   const { platilloPrincipal, bebida, postre } = req.query;
-  //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
   const respuesta = await responseController.requestEndpoint(
     platilloPrincipal,
     bebida,
