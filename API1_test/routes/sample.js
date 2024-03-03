@@ -1,129 +1,227 @@
 // routes/sample.js
-
 /**
  * @swagger
- * tags:
- *   name: Sample
- *   description: Sample API
- */
-
-/**
- * @swagger
- * /api/sample:
- *   post:
- *     summary: Get responses based on request
- *     tags: [Sample]
- *     requestBody:
- *       description: Request body
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               platilloPrincipal:
- *                 type: string
- *               postre:
- *                 type: string
- *               bebida:
- *                 type: string
- *               modo:
- *                 type: integer
- *               endpoint:
- *                 type: string
+ * /api/OpenAPI:
+ *   get:
+ *     summary: Get recommendations using OpenAI
+ *     parameters:
+ *       - name: platilloPrincipal
+ *         in: query
+ *         description: Name of the main dish
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: bebida
+ *         in: query
+ *         description: Name of the beverage
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: postre
+ *         in: query
+ *         description: Name of the dessert
+ *         required: false
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Successful response
  *         content:
  *           application/json:
  *             example:
- *               respuestaPrincipal: "Main Dish Response"
- *               respuestaPostre: "Dessert Response"
- *               respuestaBebida: "Beverage Response"
+ *               recomendacion: "Your Default Responses recommendation"
+ *
+ *
+ * @swagger
+ * /api/DefaultResponses:
+ *   get:
+ *     summary: Get recommendations using OpenAI
+ *     parameters:
+ *       - name: platilloPrincipal
+ *         in: query
+ *         description: Name of the main dish
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: bebida
+ *         in: query
+ *         description: Name of the beverage
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: postre
+ *         in: query
+ *         description: Name of the dessert
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             example:
+ *               recomendacion: "Your Default Responses recommendation"
  */
 
+const defaultResponses = require("./defaultResponses");
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const {OpenAI}=require("openai");
-const openai = new OpenAI({apiKey : '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'});
+const { OpenAI } = require("openai");
+const openai = new OpenAI({
+  apiKey: "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",
+});
+
 /**
- * This function ask to openAI what is a good dish side for an especific dish
- * @param {*} platilloPrincipal string with the name of the dish, it could be a undefine 
- * @param {*} bebida string with the name of the dish, it could be a undefine 
- * @param {*} postre string with the name of the dish, it could be a undefine 
- * @returns a json with openAI answer 
+ * This function ask to openAI what is a good side dish for a especific dish
+ * @param {*} platilloPrincipal string with the name of the main dish, it could be undefined
+ * @param {*} bebida string with the name of the drink, it could be undefined
+ * @param {*} postre string with the name of the dessert, it could be undefined
+ * @returns a json with openAI answer
  */
-async function API_OpenAi(platilloPrincipal, bebida, postre) { //IMPORTANTE se debe agregar el prompt para devolver la info en el formato deseado
+
+async function API_OpenAi(platilloPrincipal, bebida, postre) {
+  // IMPORTANTE: Agregar el prompt para devolver la información en el formato deseado
+
+  let my_platillo = "tengo un platillo principal: " + platilloPrincipal;
+  let my_bebida = "tengo una bebida: " + bebida;
+  let my_postre = "tengo un postre: " + postre;
+
+  let missingValues = [];
+
+  if (!platilloPrincipal){
+    missingValues.push(" platillo principal");
+    (my_platillo = "no tengo platillo principal ");
+  }
+
+  if (!bebida) {
+    missingValues.push(" bebida");
+    my_bebida = "no tengo bebida ";
+  }
+  
+  if (!postre) {
+    missingValues.push(" postre");
+    my_postre = "no tengo postre ";
+  }
+
+  if(missingValues.length == 0){
+    return "Parece que ya tienes tu comida completa, ¡Provecho!";
+  }
+
+  const prompt = `Hola chat, ${my_platillo} ${my_bebida} ${my_postre}, dame una recomendacion para${missingValues}`;
+    console.log(prompt);
+
+
   const completion = await openai.chat.completions.create({
-    messages: [{ role: "system", content: "I want a recommendation for an accompaniment to "+platilloPrincipal}],
+    messages: [
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
     model: "gpt-3.5-turbo",
   });
-  return completion.choices[0]["message"]["content"];
-}
 
+  return {
+    input: prompt,
+    recomendacion: completion.choices[0]["message"]["content"]
+  }
+};
 
-const interfaceController = {
-    /**
-     * This function is an interface for the externals API
-     * @param {*} platilloPrincipal 
-     * @param {*} bebida 
-     * @param {*} postre 
-     * @param {*} mode this string could be 1 or 2, 1 for an openAI request, 2 for an external API request
-     * @param {*} endpoint this param could be a undefine, but the function is to especify a endpoint for an external API
-     * @returns a json with the especific request
-     */
-    pickAPI: async function(platilloPrincipal, bebida, postre,mode, endpoint) {
-        if(mode=="1"){
-            const resp = await API_OpenAi(platilloPrincipal,bebida,postre);
-            return {
-                respuestaPrincipal:"pollo1",
-                respuestaPostre: "postre1",
-                respuestaBebida: "bebida1",
-                recomendacion: resp
-              } //openai
-        }
-        else if(mode =="2"){ //IMPORTANTE se debe realizar la conexión con API externo 
-            return {
-                respuestaPrincipal:"pollo2",
-                respuestaPostre: "postre2",
-                respuestaBebida: "bebida2",
-                endpointo:endpoint
-              } //api externo
-        }
-        
-    },
-  };
+const responseController = {
+  /**
+   * This function is an interface for the externals API
+   * @param {*} platilloPrincipal
+   * @param {*} bebida
+   * @param {*} postre
+   * @returns a json with the especific request
+   */
 
-const recomendationController = {
-    /**
-     * This interface controls if the request is in the local data base or with an external API
-     * @param {*} platilloPrincipal 
-     * @param {*} bebida 
-     * @param {*} postre 
-     * @param {*} mode 
-     * @param {*} endpoint 
-     * @returns a json with the response
-     */
-    pickMode: function(platilloPrincipal, bebida, postre,mode, endpoint) {
-        if(mode=="0"){
-            return {
-                respuestaPrincipal:platilloPrincipal,
-                respuestaPostre: postre,
-                respuestaBebida: bebida,
-              } //IMPORTANTE se debe agregar la base local o el diccionario 
-        }
-        else{
-            return  interfaceController.pickAPI(platilloPrincipal, bebida, postre,mode,endpoint) //controlador de apis
-        }
-        
-    },
-  };
+  // Obtains responses from the defaultResponses file
+  getPredefinedResponse: function (category) {
+    // Obtains a response depending on the category
+    const responses = defaultResponses[category] || [];
+    // Random selection from the data
+    const randomIndex = Math.floor(Math.random() * responses.length);
+    return responses[randomIndex];
+  },
 
-router.post('/sample', async (req, res) => {
-  const { platilloPrincipal,bebida, postre, modo, endpoint } = req.body;
-  //se debe definir como identificar si se dieron una o dos opciones (esto puede ser que si uno de los platos viene en blanco se ignora)
-  const respuesta = await recomendationController.pickMode(platilloPrincipal, bebida, postre,modo,endpoint);
+  // Handles the nullable values for default responses
+  requestDefaultResponses: function (platilloPrincipal, bebida, postre) {
+    respuestaPrincipal = platilloPrincipal
+      ? platilloPrincipal
+      : responseController.getPredefinedResponse("platilloPrincipal");
+
+    respuestaBebida = bebida
+      ? bebida
+      : responseController.getPredefinedResponse("bebida");
+
+    respuestaPostre = postre
+      ? postre
+      : responseController.getPredefinedResponse("postre");
+
+    return {
+      respuestaPrincipal,
+      respuestaPostre,
+      respuestaBebida,
+    };
+  },
+
+  // Handles the nullable values for classmate response
+  requestEndpoint: function (platilloPrincipal, bebida, postre) {
+    return {
+      respuestaPrincipal: getPredefinedResponse("platilloPrincipal"),
+      respuestaPostre: getPredefinedResponse("postre"),
+      respuestaBebida: getPredefinedResponse("bebida"),
+    };
+  },
+
+  // Handles the nullable values for the OpenAPI response
+  requestOpenAPI: async function (platilloPrincipal, bebida, postre) {
+    const resp = await API_OpenAi(platilloPrincipal, bebida, postre);
+
+    return resp //openai
+  },
+};
+
+// OpenAPI get
+router.get("/OpenAPI", async (req, res) => {
+  const { platilloPrincipal, bebida, postre } = req.query;
+
+  const respuesta = await responseController.requestOpenAPI(
+    platilloPrincipal,
+    bebida,
+    postre
+  );
+  res.json(respuesta);
+});
+
+// Default Responses get
+router.get("/DefaultResponses", async (req, res) => {
+  try {
+    const { platilloPrincipal, bebida, postre } = req.query;
+
+    const respuesta = await responseController.requestDefaultResponses(
+      platilloPrincipal,
+      bebida,
+      postre
+    );
+    res.json(respuesta);
+  } catch (error) {
+    console.error("Error in /DefaultResponses:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Classmates Endpoint get
+router.get("/Endpoint", async (req, res) => {
+  const { platilloPrincipal, bebida, postre } = req.query;
+  const respuesta = await responseController.requestEndpoint(
+    platilloPrincipal,
+    bebida,
+    postre
+  );
 
   res.json(respuesta);
 });
