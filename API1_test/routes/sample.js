@@ -83,15 +83,35 @@ const openai = new OpenAI({
 
 async function API_OpenAi(platilloPrincipal, bebida, postre) {
   // IMPORTANTE: Agregar el prompt para devolver la información en el formato deseado
-  const prompt =
-    "I need a main dish, dessert, and beverage, and I already have" +
-    platilloPrincipal +
-    " " +
-    bebida +
-    " " +
-    postre +
-    " " +
-    "Provide recommendations for the ones I don't have.";
+
+  let my_platillo = "tengo un platillo principal: " + platilloPrincipal;
+  let my_bebida = "tengo una bebida: " + bebida;
+  let my_postre = "tengo un postre: " + postre;
+
+  let missingValues = [];
+
+  if (!platilloPrincipal){
+    missingValues.push(" platillo principal");
+    (my_platillo = "no tengo platillo principal ");
+  }
+
+  if (!bebida) {
+    missingValues.push(" bebida");
+    my_bebida = "no tengo bebida ";
+  }
+  
+  if (!postre) {
+    missingValues.push(" postre");
+    my_postre = "no tengo postre ";
+  }
+
+  if(missingValues.length == 0){
+    return "Parece que ya tienes tu comida completa, ¡Provecho!";
+  }
+
+  const prompt = `Hola chat, ${my_platillo} ${my_bebida} ${my_postre}, dame una recomendacion para${missingValues}`;
+    console.log(prompt);
+
 
   const completion = await openai.chat.completions.create({
     messages: [
@@ -103,8 +123,11 @@ async function API_OpenAi(platilloPrincipal, bebida, postre) {
     model: "gpt-3.5-turbo",
   });
 
-  return completion.choices[0]["message"]["content"];
-}
+  return {
+    input: prompt,
+    recomendacion: completion.choices[0]["message"]["content"]
+  }
+};
 
 const responseController = {
   /**
@@ -158,9 +181,7 @@ const responseController = {
   requestOpenAPI: async function (platilloPrincipal, bebida, postre) {
     const resp = await API_OpenAi(platilloPrincipal, bebida, postre);
 
-    return {
-      recomendacion: resp,
-    }; //openai
+    return resp //openai
   },
 };
 
