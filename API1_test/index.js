@@ -1,5 +1,6 @@
 // index.js
 
+require('dotenv').config();
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJSDoc = require('swagger-jsdoc');
@@ -27,7 +28,7 @@ app.use(express.json()); // Middleware to parse JSON requests
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Sample route
-app.use('/api', require('./routes/sample'));
+app.use('/api', require('./src/routing'));
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
