@@ -7,6 +7,6 @@ recomender = new RecommenderController();
 // OpenAPI get
 router.get("/OpenAI", recomender.get_open_ai_response);
 router.get("/DefaultResponses", recomender.get_database_response);
-router.get("/Endpoint", recomender.get_endpoint_response);
+router.get("/Endpoint", recomender.get_peer_response);
 
 module.exports = router;
