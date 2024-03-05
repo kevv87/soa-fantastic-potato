@@ -1,7 +1,9 @@
-const { OpenAI } = require("openai");
+const { OpenAI } = require('openai');
 const openai = new OpenAI({
   apiKey: process.env.OPEN_AI_TOKEN,
 });
+
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 // Example of an error
 class RecomendacionNotFoundError extends Error {
@@ -33,39 +35,40 @@ class OpenAIError extends Error {
 }
 
 class OpenAiIface {
-    async _ask_openai(platilloPrincipal, bebida, postre) {
-        let my_platillo = "tengo un platillo principal: " + platilloPrincipal;
-        let my_bebida = "tengo una bebida: " + bebida;
-        let my_postre = "tengo un postre: " + postre;
+  async _ask_openai(platilloPrincipal, bebida, postre) {
+    let my_platillo = 'tengo un platillo principal: ' + platilloPrincipal;
+    let my_bebida = 'tengo una bebida: ' + bebida;
+    let my_postre = 'tengo un postre: ' + postre;
 
-        let missingValues = [];
+    let missingValues = [];
 
-        if (!platilloPrincipal){
-            missingValues.push(" platillo principal");
-            (my_platillo = "no tengo platillo principal ");
-        }
+    if (!platilloPrincipal) {
+      missingValues.push(' platillo principal');
+      my_platillo = 'no tengo platillo principal ';
+    }
 
-        if (!bebida) {
-            missingValues.push(" bebida");
-            my_bebida = "no tengo bebida ";
-        }
-        
-        if (!postre) {
-            missingValues.push(" postre");
-            my_postre = "no tengo postre ";
-        }
+    if (!bebida) {
+      missingValues.push(' bebida');
+      my_bebida = 'no tengo bebida ';
+    }
 
-        // TODO: Esto es un error, pero agarrarlo mas arriba
-        if(missingValues.length == 0){
-            return "Parece que ya tienes tu comida completa, ¡Provecho!";
-        }
+    if (!postre) {
+      missingValues.push(' postre');
+      my_postre = 'no tengo postre ';
+    }
 
-        const prompt = `Hola chat, ${my_platillo} ${my_bebida} ${my_postre},` +
-            ` dame una recomendacion para${missingValues}` +
-            ` parsea tu respuesta como un json que contenga los siguientes fields:` +
-            ` platilloPrincipal, bebida, postre, y como valor una unica palabra` +
-            ` con tu recomendacion`;
-        
+    // TODO: Esto es un error, pero agarrarlo mas arriba
+    if (missingValues.length == 0) {
+      return 'Parece que ya tienes tu comida completa, ¡Provecho!';
+    }
+
+    const prompt =
+      `Hola chat, ${my_platillo} ${my_bebida} ${my_postre},` +
+      ` dame una recomendacion para${missingValues}` +
+      ` parsea tu respuesta como un json que contenga los siguientes fields:` +
+      ` platilloPrincipal, bebida, postre, y como valor una unica palabra` +
+      ` con tu recomendacion`;
+
         console.log(prompt);
 
         // TODO: Aqui tambien el API puede tirarnos errores, como:
@@ -125,16 +128,32 @@ class OpenAiIface {
 }
 
 class PeerIface {
-    // TODO: Add connection and details to PeerIface
-    async getRecomendacion(platilloPrincipal, bebida, postre, res) {
+  // TODO: Add connection and details to PeerIface
+  async getRecomendacion(endpoint_function, id, tipo, comida) {
+    const apiUrl = `https://myservice.azurewebsites.net/${endpoint_function}?id=${id}&tipo=${tipo}&comida=${comida}`;
 
+    // Return the promise returned by fetch
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      // Log the data (you can remove this line if not needed)
+      return data;
+    } catch (error) {
+      // Log the error (you can remove this line if not needed)
+      console.error('Fetch error:', error);
+      // Propagate the error by rethrowing it
+      throw error;
     }
+  }
 }
 
 class DatabaseIface {
-    constructor(defaultResponses) {
-        this.defaultResponses = defaultResponses;
-    }
+  constructor(defaultResponses) {
+    this.defaultResponses = defaultResponses;
+  }
 
     // Obtains responses from the defaultResponses file
     _getPredefinedResponse(category) {
@@ -151,20 +170,16 @@ class DatabaseIface {
         return responses[randomIndex];
     }
 
-    async getRecomendacion(platilloPrincipal, bebida, postre, res) {
-        console.log("Attempting to get recomendacion");
-        try {
-            const respuestaPrincipal = platilloPrincipal
-            ? platilloPrincipal
-            : this._getPredefinedResponse("platilloPrincipal");
+  async getRecomendacion(platilloPrincipal, bebida, postre, res) {
+    console.log('Attempting to get recomendacion');
+    try {
+      const respuestaPrincipal = platilloPrincipal
+        ? platilloPrincipal
+        : this._getPredefinedResponse('platilloPrincipal');
 
-            const respuestaBebida = bebida
-            ? bebida
-            : this._getPredefinedResponse("bebida");
+      const respuestaBebida = bebida ? bebida : this._getPredefinedResponse('bebida');
 
-            const respuestaPostre = postre
-            ? postre
-            : this._getPredefinedResponse("postre");
+      const respuestaPostre = postre ? postre : this._getPredefinedResponse('postre');
 
             res.json({
                 respuestaPrincipal,

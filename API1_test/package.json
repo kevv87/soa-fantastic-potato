@@ -9,7 +9,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "prettier": {
+    "printWidth": 120,
+    "singleQuote": true
+  },
   "dependencies": {
+    "dotenv": "^16.4.5",
     "express": "^4.18.3",
     "openai": "^4.28.0",
     "swagger-jsdoc": "^6.2.8",
