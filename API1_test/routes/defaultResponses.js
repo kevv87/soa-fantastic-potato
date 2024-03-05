@@ -6,7 +6,6 @@ const defaultResponses = {
     "Salmon Ahumado",
     "Pasta Alfredo",
     "Hamburguesa Vegetariana",
-    "caca",
   ],
   bebida: ["Te de Mango", "Cafe", "Agua"],
 };

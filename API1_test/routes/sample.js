@@ -30,12 +30,48 @@
  *           application/json:
  *             example:
  *               recomendacion: "Your Default Responses recommendation"
+ *@swagger
+ * /api/Endpoint:
+ *   get:
+ *     summary: Get recommendations using Classmates Endpoint
+ *     parameters:
+ *       - name: endpoint_function
+ *         in: query
+ *         description: Name of the GET function to call
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - name: id
+ *         in: query
+ *         description: Id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - name: tipo
+ *         in: query
+ *         description: Name of the type
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - name: comida
+ *         in: query
+ *         description: Name of the food
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             example:
+ *               recomendacion: "Your Default Responses recommendation"
  *
  *
  * @swagger
  * /api/DefaultResponses:
  *   get:
- *     summary: Get recommendations using OpenAI
+ *     summary: Get recommendations using Default Responses
  *     parameters:
  *       - name: platilloPrincipal
  *         in: query
@@ -62,16 +98,21 @@
  *           application/json:
  *             example:
  *               recomendacion: "Your Default Responses recommendation"
+ *
+ *
+
  */
 
 const defaultResponses = require("./defaultResponses");
-
 const express = require("express");
 const router = express.Router();
 const { OpenAI } = require("openai");
 const openai = new OpenAI({
-  apiKey: "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",
+  apiKey: process.env.RecommendationAPIKey,
 });
+
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 /**
  * This function ask to openAI what is a good side dish for a especific dish
@@ -83,15 +124,34 @@ const openai = new OpenAI({
 
 async function API_OpenAi(platilloPrincipal, bebida, postre) {
   // IMPORTANTE: Agregar el prompt para devolver la información en el formato deseado
-  const prompt =
-    "I need a main dish, dessert, and beverage, and I already have" +
-    platilloPrincipal +
-    " " +
-    bebida +
-    " " +
-    postre +
-    " " +
-    "Provide recommendations for the ones I don't have.";
+
+  let my_platillo = "tengo un platillo principal: " + platilloPrincipal;
+  let my_bebida = "tengo una bebida: " + bebida;
+  let my_postre = "tengo un postre: " + postre;
+
+  let missingValues = [];
+
+  if (!platilloPrincipal) {
+    missingValues.push(" platillo principal");
+    my_platillo = "no tengo platillo principal ";
+  }
+
+  if (!bebida) {
+    missingValues.push(" bebida");
+    my_bebida = "no tengo bebida ";
+  }
+
+  if (!postre) {
+    missingValues.push(" postre");
+    my_postre = "no tengo postre ";
+  }
+
+  if (missingValues.length == 0) {
+    return "Parece que ya tienes tu comida completa, ¡Provecho!";
+  }
+
+  const prompt = `Hola chat, ${my_platillo} ${my_bebida} ${my_postre}, dame una recomendacion para${missingValues}`;
+  console.log(prompt);
 
   const completion = await openai.chat.completions.create({
     messages: [
@@ -103,7 +163,10 @@ async function API_OpenAi(platilloPrincipal, bebida, postre) {
     model: "gpt-3.5-turbo",
   });
 
-  return completion.choices[0]["message"]["content"];
+  return {
+    input: prompt,
+    recomendacion: completion.choices[0]["message"]["content"],
+  };
 }
 
 const responseController = {
@@ -126,6 +189,7 @@ const responseController = {
 
   // Handles the nullable values for default responses
   requestDefaultResponses: function (platilloPrincipal, bebida, postre) {
+    console.log(process.env);
     respuestaPrincipal = platilloPrincipal
       ? platilloPrincipal
       : responseController.getPredefinedResponse("platilloPrincipal");
@@ -146,21 +210,32 @@ const responseController = {
   },
 
   // Handles the nullable values for classmate response
-  requestEndpoint: function (platilloPrincipal, bebida, postre) {
-    return {
-      respuestaPrincipal: getPredefinedResponse("platilloPrincipal"),
-      respuestaPostre: getPredefinedResponse("postre"),
-      respuestaBebida: getPredefinedResponse("bebida"),
-    };
+  requestEndpoint: async function (endpoint_function, id, tipo, comida) {
+    const apiUrl = `https://myservice.azurewebsites.net/${endpoint_function}?id=${id}&tipo=${tipo}&comida=${comida}`;
+
+    // Return the promise returned by fetch
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      // Log the data (you can remove this line if not needed)
+      console.log(data);
+      return data;
+    } catch (error) {
+      // Log the error (you can remove this line if not needed)
+      console.error("Fetch error:", error);
+      // Propagate the error by rethrowing it
+      throw error;
+    }
   },
 
   // Handles the nullable values for the OpenAPI response
   requestOpenAPI: async function (platilloPrincipal, bebida, postre) {
     const resp = await API_OpenAi(platilloPrincipal, bebida, postre);
 
-    return {
-      recomendacion: resp,
-    }; //openai
+    return resp; //openai
   },
 };
 
@@ -195,11 +270,12 @@ router.get("/DefaultResponses", async (req, res) => {
 
 // Classmates Endpoint get
 router.get("/Endpoint", async (req, res) => {
-  const { platilloPrincipal, bebida, postre } = req.query;
+  const { endpoint_function, id, tipo, comida } = req.query;
   const respuesta = await responseController.requestEndpoint(
-    platilloPrincipal,
-    bebida,
-    postre
+    endpoint_function,
+    id,
+    tipo,
+    comida
   );
 
   res.json(respuesta);
