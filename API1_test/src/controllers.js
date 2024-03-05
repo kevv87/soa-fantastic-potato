@@ -1,5 +1,108 @@
-const { PeerIface, OpenAiIface, DatabaseIface } = require("./interfaces");
-const defaultResponses = require("./defaultResponses");
+/**
+ * @swagger
+ * /api/OpenAI:
+ *   get:
+ *     summary: Get recommendations using OpenAI
+ *     parameters:
+ *       - name: platilloPrincipal
+ *         in: query
+ *         description: Name of the main dish
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: bebida
+ *         in: query
+ *         description: Name of the beverage
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: postre
+ *         in: query
+ *         description: Name of the dessert
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             example:
+ *               recomendacion: "Your Default Responses recommendation"
+ *@swagger
+ * /api/Endpoint:
+ *   get:
+ *     summary: Get recommendations using Classmates Endpoint
+ *     parameters:
+ *       - name: endpoint_function
+ *         in: query
+ *         description: Name of the GET function to call
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - name: id
+ *         in: query
+ *         description: Id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - name: tipo
+ *         in: query
+ *         description: Name of the type
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - name: comida
+ *         in: query
+ *         description: Name of the food
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             example:
+ *               recomendacion: "Your Default Responses recommendation"
+ *
+ *
+ * @swagger
+ * /api/DefaultResponses:
+ *   get:
+ *     summary: Get recommendations using Default Responses
+ *     parameters:
+ *       - name: platilloPrincipal
+ *         in: query
+ *         description: Name of the main dish
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: bebida
+ *         in: query
+ *         description: Name of the beverage
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - name: postre
+ *         in: query
+ *         description: Name of the dessert
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             example:
+ *               recomendacion: "Your Default Responses recommendation"
+ *
+ *
+ */
+
+const { PeerIface, OpenAiIface, DatabaseIface } = require('./interfaces');
+const defaultResponses = require('./defaultResponses');
 
 class RecommenderController {
   constructor() {
